@@ -1,18 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
-  const { method } = req;
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    return res.status(500).json({ error: 'Missing Supabase credentials' });
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
   try {
+    const { method } = req;
+    
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    console.log('Supabase URL:', supabaseUrl ? 'SET' : 'MISSING');
+    console.log('Supabase Key:', supabaseKey ? 'SET' : 'MISSING');
+
+    if (!supabaseUrl || !supabaseKey) {
+      return res.status(500).json({ 
+        error: 'Missing Supabase credentials',
+        url: supabaseUrl ? 'present' : 'missing',
+        key: supabaseKey ? 'present' : 'missing'
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     if (method === 'GET') {
       const { modelId } = req.query;
 
@@ -26,7 +33,11 @@ export default async function handler(req, res) {
         .eq('model_id', modelId)
         .order('order', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        return res.status(500).json({ error: error.message });
+      }
+
       return res.status(200).json(data || []);
     }
 
@@ -56,7 +67,10 @@ export default async function handler(req, res) {
         .insert(rows)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        return res.status(500).json({ error: error.message });
+      }
 
       return res.status(200).json(
         data.map(d => ({
@@ -77,13 +91,17 @@ export default async function handler(req, res) {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        return res.status(500).json({ error: error.message });
+      }
+
       return res.status(200).json({ success: true });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
-    console.error('Production inputs error:', error);
-    return res.status(500).json({ error: error.message });
+    console.error('API error:', error);
+    return res.status(500).json({ error: error.message, stack: error.stack });
   }
 }
