@@ -1,12 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-
 export default async function handler(req, res) {
   const { method } = req;
+  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return res.status(500).json({ error: 'Missing Supabase credentials' });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
     if (method === 'GET') {
@@ -23,7 +27,6 @@ export default async function handler(req, res) {
         .order('order', { ascending: true });
 
       if (error) throw error;
-
       return res.status(200).json(data || []);
     }
 
@@ -75,7 +78,6 @@ export default async function handler(req, res) {
         .eq('id', id);
 
       if (error) throw error;
-
       return res.status(200).json({ success: true });
     }
 
