@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import ProductionInputs from '../components/ProductionInputs';
-import '../styles/production-inputs.css';
 
 export default function App() {
   const [modelId, setModelId] = useState(null);
